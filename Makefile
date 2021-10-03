@@ -1,7 +1,7 @@
 PREFIX ?= /usr/local
 
 BIN = xkblayout-remember
-SRC = xkblayout-remember.cpp
+SRC = xkblayout-remember.c
 
 .PHONY: all install uninstall clean
 .POSIX:
@@ -20,4 +20,4 @@ clean :
 	rm -f $(BIN)
 
 $(BIN) : $(SRC)
-	g++ -Wall $(SRC) -o $(BIN) -lX11
+	$(CC) -Wall $(SRC) -o $(BIN) -lX11

@@ -1,10 +1,9 @@
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/Xutil.h>
-#include <cstring>
-#include <iostream>
+#include <stdio.h>
+#include <string.h>
 #define MAXSTR 1000
-using namespace std;
 
 int getKeyboardLayout();
 void getWindowClass(Window w, char* c);
@@ -27,7 +26,7 @@ int main()
     int layout, layout_old, layout_main;
 
     if (!(d = XOpenDisplay(NULL))) {
-        cerr << "Cannot open display" << endl;
+        fprintf(stderr, "Cannot open display\n");
         return 1;
     }
 
@@ -57,7 +56,7 @@ int main()
             w = getActiveWindow(root);
             getWindowClass(w, winclass);
             if (!winclass) strcpy(winclass, "NULL");
-            cout << w << "\t" << winclass << "\t" << getKeyboardLayout() << endl;
+            printf("%lu\t%s\t%d\n", w, winclass, getKeyboardLayout());
         }
     }
 
@@ -92,7 +91,7 @@ unsigned long getLongProperty(const char *property_name, Window w)
     if (!w) return 0;
     getStringProperty(property_name, w);
     if (!prop) return 0;
-    unsigned long long_property = static_cast<unsigned long>(prop[0] + (prop[1] << 8) + (prop[2] << 16) + (prop[3] << 24));
+    unsigned long long_property = (unsigned long)(prop[0] + (prop[1] << 8) + (prop[2] << 16) + (prop[3] << 24));
     return long_property;
 }
 
