@@ -7,21 +7,30 @@
 
 unsigned long getActiveWindow(Window root);
 void getWindowClass(Window w, char* class_ret);
-int getKeyboardLayout();
+unsigned int getKeyboardLayout();
 unsigned long getLongProperty(Window w, const char* propname);
 void getStringProperty(Window w, const char* propname);
 void checkStatus(int status, Window w);
 
+typedef struct {
+    Window w;
+    char class[MAXSTR];
+    unsigned int layout;
+    unsigned int isfree;
+} Record;
+
 Display* d;
 unsigned char* prop;
+static Record r[256];
 
 int main()
 {
-    XEvent e;
+    XEvent ev;
     Window w, root;
     XkbEvent* xev;
     char class[MAXSTR] = {0};
-    int layout, layout_old, layout_main;
+    unsigned int layout, layout_prev, layout_main;
+    Record db[MAXSTR];
 
     if (!(d = XOpenDisplay(NULL))) {
         fprintf(stderr, "Cannot Open Display.\n");
@@ -39,25 +48,45 @@ int main()
     XkbSelectEvents(d, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     XSync(d, False);
 
-    layout = layout_old = layout_main = getKeyboardLayout();
+    layout = layout_prev = layout_main = getKeyboardLayout();
+    /* Change Layout ===> XkbLockGroup(d, XkbUseCoreKbd, 1); */
     for (;;) {
+
         XNextEvent(d, &e);
+
         xev = (XkbEvent*)&e;
-        if ((e.type == PropertyNotify && !strcmp(XGetAtomName(d, e.xproperty.atom), "_NET_ACTIVE_WINDOW")) ||
+        if (e.type == xkbEventType && xev->any.xkb_type == XkbStateNotify) {
+            layout = getKeyboardLayout();
+            if (layout == layout_prev)
+                continue;
+            layout_prev = layout;
+            if (layout == layout_main) {
+            } else {
+
+            }
+            w = getActiveWindow(root);
+        }
+
+        else if ((e.type == PropertyNotify && !strcmp(XGetAtomName(d, e.xproperty.atom), "_NET_ACTIVE_WINDOW")) ||
             (e.type == xkbEventType && xev->any.xkb_type == XkbStateNotify)) {
             if (e.type == xkbEventType) {
                 layout = getKeyboardLayout();
-                if (layout == layout_old)
+                if (layout == layout_prev)
                     continue;
-                layout_old = layout;
+                layout_prev = layout;
             }
             w = getActiveWindow(root);
             getWindowClass(w, class);
-            printf("%lu\t%s\t%d\n", w, class, getKeyboardLayout());
+            printf("%lu\t%s\t%u\n", w, class, getKeyboardLayout());
         }
     }
 
+    XFree(prop);
+    XCloseDisplay(d);
     return 0;
+}
+
+void record(Window w, const char* class, unsigned int layout) {
 }
 
 unsigned long getActiveWindow(Window root)

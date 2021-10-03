@@ -1,0 +1,19 @@
+complete the Record data structure
+{
+    maybe we have to have a way to overwrite old window data
+    if window numbers exceed the size of the r[] array
+
+    finish record() and free()
+    however, it could be more efficient to not have a free(),
+    because then for windows that should have the defaylt kblayout,
+    we won't have to search the entire fucking array only to find out
+    this window should be on the default layout.
+
+    Pros of having free():
+        Now we ONLY have to keep windows whose kblayout we want changed
+    Cons of having free():
+        Search of almost every window will now bottom out
+
+    ok u know wat? ghash it is.
+    I have to use g_direct_hash() for my usecase.
+}
