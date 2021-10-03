@@ -6,15 +6,14 @@
 #define MAXSTR 1000
 
 int getKeyboardLayout();
-void getWindowClass(Window w, char* c);
+void getWindowClass(Window w, char* class_ret);
 unsigned long getWindowPID(Window w);
 unsigned long getActiveWindow(Window root);
-unsigned long getLongProperty(const char *property_name, Window w);
-unsigned char *getStringProperty(const char *property_name, Window w);
+unsigned long getLongProperty(const char* prop, Window w);
+void getStringProperty(const char* prop, Window w, char* ret);
 void checkStatus(int status, Window w);
 
 Display* d;
-unsigned char *prop;
 
 int main()
 {
@@ -73,23 +72,23 @@ void checkStatus(int status, Window w)
     }
 }
 
-unsigned char *getStringProperty(const char *property_name, Window w)
+void getStringProperty(const char* prop, Window w, char* ret)
 {
     Atom actual_type, filter_atom;
     int actual_format, status;
     unsigned long nitems, bytes_after;
 
-    filter_atom = XInternAtom(d, property_name, True);
+    filter_atom = XInternAtom(d, prop, True);
     status = XGetWindowProperty(d, w, filter_atom, 0, MAXSTR, False, AnyPropertyType,
                                 &actual_type, &actual_format, &nitems, &bytes_after, &prop);
     checkStatus(status, w);
     return prop;
 }
 
-unsigned long getLongProperty(const char *property_name, Window w)
+unsigned long getLongProperty(const char* prop, Window w)
 {
     if (!w) return 0;
-    getStringProperty(property_name, w);
+    getStringProperty(prop, w);
     if (!prop) return 0;
     unsigned long long_property = (unsigned long)(prop[0] + (prop[1] << 8) + (prop[2] << 16) + (prop[3] << 24));
     return long_property;
@@ -110,15 +109,15 @@ unsigned long getWindowPID(Window w)
     return getLongProperty(("_NET_WM_PID"), w);
 }
 
-void getWindowClass(Window w, char* c)
+void getWindowClass(Window w, char* class_ret)
 {
     if (!w) {
-        c = NULL;
+        class_ret = NULL;
         return;
     }
     XClassHint ch;
     XGetClassHint(d, w, &ch);
-    strcpy(c, ch.res_class);
+    strcpy(class_ret, ch.res_class);
 }
 
 int getKeyboardLayout()
