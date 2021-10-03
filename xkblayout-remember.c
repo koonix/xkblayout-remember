@@ -7,7 +7,6 @@
 
 int getKeyboardLayout();
 void getWindowClass(Window w, char* class_ret);
-unsigned long getWindowPID(Window w);
 unsigned long getActiveWindow(Window root);
 unsigned long getLongProperty(const char* prop, Window w);
 void getStringProperty(const char* prop, Window w, char* ret);
@@ -20,7 +19,6 @@ int main()
     XEvent e;
     Window w, root;
     XkbEvent* xev;
-    /* pid_t winpid; */
     char winclass[512] = {0};
     int layout, layout_old, layout_main;
 
@@ -101,12 +99,6 @@ unsigned long getActiveWindow(Window root)
         return w;
     else
         return 0;
-}
-
-unsigned long getWindowPID(Window w)
-{
-    if (!w) return 0;
-    return getLongProperty(("_NET_WM_PID"), w);
 }
 
 void getWindowClass(Window w, char* class_ret)
