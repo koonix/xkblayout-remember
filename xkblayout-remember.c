@@ -1,8 +1,8 @@
+#include <stdio.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/Xutil.h>
-#include <stdio.h>
-#include <string.h>
 #define MAXSTR 1000
 
 unsigned long getActiveWindow(Window root);
@@ -53,8 +53,6 @@ int main()
             }
             w = getActiveWindow(root);
             getWindowClass(w, class);
-            if (!class)
-                strcpy(class, "NULL");
             printf("%lu\t%s\t%d\n", w, class, getKeyboardLayout());
         }
     }
@@ -74,7 +72,7 @@ unsigned long getActiveWindow(Window root)
 void getWindowClass(Window w, char* class_ret)
 {
     if (!w) {
-        class_ret = NULL;
+        class_ret[0] = '\0';
         return;
     }
     XClassHint ch;
