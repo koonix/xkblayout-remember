@@ -44,7 +44,7 @@ unsigned long getLongProperty(const char *property_name, Window w)
 unsigned long getActiveWindow(Window root)
 {
     unsigned long w;
-    if (w = getLongProperty("_NET_ACTIVE_WINDOW", root))
+    if ( (w = getLongProperty("_NET_ACTIVE_WINDOW", root)) )
         return w;
     else
         return 0;
@@ -58,6 +58,10 @@ unsigned long getWindowPID(Window w)
 
 void getWindowClass(Window w, char* c)
 {
+    if (!w) {
+        c = NULL;
+        return;
+    }
     XClassHint ch;
     XGetClassHint(d, w, &ch);
     strcpy(c, ch.res_class);
@@ -75,9 +79,9 @@ int main()
     XEvent e;
     Window w, root;
     XkbEvent* xev;
-    pid_t winpid;
+    /* pid_t winpid; */
     char winclass[512] = {0};
-    int layout, layout_old;
+    int layout, layout_old, layout_main;
 
     if (!(d = XOpenDisplay(NULL))) {
         cerr << "Cannot open display" << endl;
@@ -95,7 +99,7 @@ int main()
     XkbSelectEvents(d, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     XSync(d, False);
 
-    layout = layout_old = getKeyboardLayout();
+    layout = layout_old = layout_main = getKeyboardLayout();
     for (;;) {
         XNextEvent(d, &e);
         xev = (XkbEvent*)&e;
@@ -108,10 +112,9 @@ int main()
                 layout_old = layout;
             }
             w = getActiveWindow(root);
-            winpid = getWindowPID(w);
             getWindowClass(w, winclass);
             if (!winclass) strcpy(winclass, "NULL");
-            cout << winpid << "\t" << winclass << "\t" << getKeyboardLayout() << endl;
+            cout << w << "\t" << winclass << "\t" << getKeyboardLayout() << endl;
         }
     }
 
