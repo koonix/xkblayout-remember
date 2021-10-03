@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <glib.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/Xutil.h>
@@ -20,6 +22,7 @@ typedef struct {
 } Record;
 
 Display* d;
+GHashTable* t;
 unsigned char* prop;
 static Record r[256];
 
@@ -47,6 +50,9 @@ int main()
     XkbQueryExtension(d, 0, &xkbEventType, 0, 0, 0);
     XkbSelectEvents(d, XkbUseCoreKbd, XkbAllEventsMask, XkbAllEventsMask);
     XSync(d, False);
+
+    // Create HashTable
+    t = g_hash_table_new_full(g_int64_hash, g_int64_equal, free, free);
 
     layout = layout_prev = layout_main = getKeyboardLayout();
     /* Change Layout ===> XkbLockGroup(d, XkbUseCoreKbd, 1); */
@@ -87,6 +93,14 @@ int main()
 }
 
 void record(Window w, const char* class, unsigned int layout) {
+    unsigned long* key = NULL;
+    key = malloc(sizeof(*key));
+    *key = (unsigned long)w;
+    g_hash_table_insert(t, key, (gpointer)1);
+}
+
+unsigned long fetch(Window w, const char* class) {
+    return g_hash_table_lookup(t, (gconstpointer)&w);
 }
 
 unsigned long getActiveWindow(Window root)
