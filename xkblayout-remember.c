@@ -5,25 +5,26 @@
 #include <string.h>
 #define MAXSTR 1000
 
-int getKeyboardLayout();
-void getWindowClass(Window w, char* class_ret);
 unsigned long getActiveWindow(Window root);
-unsigned long getLongProperty(const char* prop, Window w);
-void getStringProperty(const char* prop, Window w, char* ret);
+void getWindowClass(Window w, char* class_ret);
+int getKeyboardLayout();
+unsigned long getLongProperty(Window w, const char* propname);
+void getStringProperty(Window w, const char* propname);
 void checkStatus(int status, Window w);
 
 Display* d;
+unsigned char* prop;
 
 int main()
 {
     XEvent e;
     Window w, root;
     XkbEvent* xev;
-    char winclass[512] = {0};
+    char class[MAXSTR] = {0};
     int layout, layout_old, layout_main;
 
     if (!(d = XOpenDisplay(NULL))) {
-        fprintf(stderr, "Cannot open display\n");
+        fprintf(stderr, "Cannot Open Display.\n");
         return 1;
     }
 
@@ -51,51 +52,20 @@ int main()
                 layout_old = layout;
             }
             w = getActiveWindow(root);
-            getWindowClass(w, winclass);
-            if (!winclass) strcpy(winclass, "NULL");
-            printf("%lu\t%s\t%d\n", w, winclass, getKeyboardLayout());
+            getWindowClass(w, class);
+            if (!class)
+                strcpy(class, "NULL");
+            printf("%lu\t%s\t%d\n", w, class, getKeyboardLayout());
         }
     }
 
     return 0;
 }
 
-void checkStatus(int status, Window w)
-{
-    if (status == BadWindow) {
-        printf("window id # 0x%lx does not exists!", w);
-    }
-    if (status != Success) {
-        printf("XGetWindowProperty failed!");
-    }
-}
-
-void getStringProperty(const char* prop, Window w, char* ret)
-{
-    Atom actual_type, filter_atom;
-    int actual_format, status;
-    unsigned long nitems, bytes_after;
-
-    filter_atom = XInternAtom(d, prop, True);
-    status = XGetWindowProperty(d, w, filter_atom, 0, MAXSTR, False, AnyPropertyType,
-                                &actual_type, &actual_format, &nitems, &bytes_after, &prop);
-    checkStatus(status, w);
-    return prop;
-}
-
-unsigned long getLongProperty(const char* prop, Window w)
-{
-    if (!w) return 0;
-    getStringProperty(prop, w);
-    if (!prop) return 0;
-    unsigned long long_property = (unsigned long)(prop[0] + (prop[1] << 8) + (prop[2] << 16) + (prop[3] << 24));
-    return long_property;
-}
-
 unsigned long getActiveWindow(Window root)
 {
     unsigned long w;
-    if ( (w = getLongProperty("_NET_ACTIVE_WINDOW", root)) )
+    if (( w = getLongProperty(root, "_NET_ACTIVE_WINDOW") ))
         return w;
     else
         return 0;
@@ -117,4 +87,36 @@ int getKeyboardLayout()
     XkbStateRec state;
     XkbGetState(d, XkbUseCoreKbd, &state);
     return (int)state.group;
+}
+
+unsigned long getLongProperty(Window w, const char* propname)
+{
+    if (!w)
+        return 0;
+    getStringProperty(w, propname);
+    if (!prop)
+        return 0;
+    return (unsigned long)(prop[0] + (prop[1] << 8) + (prop[2] << 16) + (prop[3] << 24));
+}
+
+void getStringProperty(Window w, const char* propname)
+{
+    Atom actual_type, filter_atom;
+    int actual_format, status;
+    unsigned long nitems, bytes_after;
+
+    filter_atom = XInternAtom(d, propname, True);
+    status = XGetWindowProperty(d, w, filter_atom, 0, MAXSTR, False, AnyPropertyType,
+                                &actual_type, &actual_format, &nitems, &bytes_after, &prop);
+    checkStatus(status, w);
+}
+
+void checkStatus(int status, Window w)
+{
+    if (status == BadWindow) {
+        fprintf(stderr, "Window ID #0x%lx does not exist.", w);
+    }
+    if (status != Success) {
+        fprintf(stderr, "XGetWindowProperty failed.");
+    }
 }
