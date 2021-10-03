@@ -1,20 +1,18 @@
 Upon start of the program, take the current keyboard layout
 to be our main keyboard layout.
 
+Upon start:
+{
+    record the current window and it's layout in the database
+}
+
 Upon keyboard layout change event:
 {
-    if our keyboard layout is something other than the main layout,
-    record the current layout and the current window and
-    associate the layout with the window.
-
-    if our keyboard layout is main, remove the record of
-    the current window if it exists.
+    update the current window and it's layout in the database
 }
 
 Upon window change event:
 {
-    if the window is in the records,
-    change the layout to what is in the records.
-
-    if it's not, change the layout to the default one.
+    if window exists in database, apply it's layout
+    if not, record it in the database
 }
