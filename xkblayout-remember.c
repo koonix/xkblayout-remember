@@ -7,26 +7,26 @@
 #include <X11/Xutil.h>
 #define MAXSTR 1000
 
-unsigned long getActiveWindowUID();
-unsigned long getActiveWindow();
-unsigned long getWindowPID(Window w);
-unsigned int getKeyboardLayout();
-unsigned long getLongProperty(Window w, const char* propname);
-void getStringProperty(Window w, const char* propname);
-void checkStatus(int status, Window w);
-int is_xkb_event(XEvent ev);
-int is_focus_event(XEvent ev);
-void recordLayout(Window w, unsigned int layout);
-unsigned int fetchLayout(Window w);
-void init_xkb();
-void init_xfocusev();
-void init_hashtable();
+static unsigned long getActiveWindowUID();
+static unsigned long getActiveWindow();
+static unsigned long getWindowPID(Window w);
+static unsigned int getKeyboardLayout();
+static int is_xkb_event(XEvent ev);
+static int is_focus_event(XEvent ev);
+static void recordLayout(Window w, unsigned int layout);
+static unsigned int fetchLayout(Window w);
+static void init_xkb();
+static void init_xfocusev();
+static void init_hashtable();
+static unsigned long getLongProperty(Window w, const char* propname);
+static void getStringProperty(Window w, const char* propname);
+static void checkStatus(int status, Window w);
 
-Display* d;
-Window root;
-GHashTable* t;
-unsigned char* prop;
-int xkbEventType;
+static Display* d;
+static Window root;
+static GHashTable* t;
+static unsigned char* prop;
+static int xkbEventType;
 
 int main()
 {
@@ -124,7 +124,7 @@ void checkStatus(int status, Window w)
     }
 }
 
-/* subscribe to keyboard layout events */
+/* setup keyboard layout events */
 void init_xkb()
 {
     XKeysymToKeycode(d, XK_F1);
@@ -133,7 +133,7 @@ void init_xkb()
     XSync(d, False);
 }
 
-/* subscribe to window events */
+/* setup window focus change events */
 void init_xfocusev()
 {
     root = DefaultRootWindow(d);
