@@ -18,6 +18,7 @@ static unsigned int fetchLayout(Window w);
 static void init_xkb();
 static void init_xfocusev();
 static void init_hashtable();
+static void destroy_hashtable();
 static unsigned long getLongProperty(Window w, const char* propname);
 static void getStringProperty(Window w, const char* propname);
 static void checkStatus(int status, Window w);
@@ -58,6 +59,7 @@ int main()
             XkbLockGroup(d, XkbUseCoreKbd, fetchLayout(getActiveWindowUID()));
     }
 
+    destroy_hashtable();
     XFree(prop);
     XCloseDisplay(d);
     return 0;
@@ -155,6 +157,11 @@ int is_focus_event(XEvent ev)
 void init_hashtable()
 {
     t = g_hash_table_new_full(g_int64_hash, g_int64_equal, free, NULL);
+}
+
+void destroy_hashtable()
+{
+    g_hash_table_destroy(t);
 }
 
 void recordLayout(Window w, unsigned int layout)
