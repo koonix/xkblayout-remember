@@ -21,7 +21,6 @@ unsigned int fetchLayout(Window w);
 void init_xkb();
 void init_xfocusev();
 void init_hashtable();
-/* void getWindowClass(Window w, char* class_ret); */
 
 Display* d;
 Window root;
@@ -170,14 +169,3 @@ unsigned int fetchLayout(Window w)
 {
     return (unsigned int)GPOINTER_TO_INT(g_hash_table_lookup(t, &w));
 }
-
-/* void getWindowClass(Window w, char* class_ret) */
-/* { */
-/*     if (!w) { */
-/*         class_ret[0] = '\0'; */
-/*         return; */
-/*     } */
-/*     XClassHint ch; */
-/*     XGetClassHint(d, w, &ch); */
-/*     strcpy(class_ret, ch.res_class); */
-/* } */
