@@ -14,5 +14,5 @@ Upon keyboard layout change event:
 Upon window change event:
 {
     if window exists in database, apply it's layout
-    if not, record it in the database
+    if not, record it in the database apply the base layout
 }
