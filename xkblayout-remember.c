@@ -7,18 +7,21 @@
 #include <X11/Xutil.h>
 #define MAXSTR 1000
 
+unsigned long getActiveWindowUID();
 unsigned long getActiveWindow();
-/* void getWindowClass(Window w, char* class_ret); */
+unsigned long getWindowPID(Window w);
 unsigned int getKeyboardLayout();
 unsigned long getLongProperty(Window w, const char* propname);
 void getStringProperty(Window w, const char* propname);
 void checkStatus(int status, Window w);
 int is_xkb_event(XEvent ev);
 int is_focus_event(XEvent ev);
-void record(Window w, unsigned int layout);
-unsigned int fetch(Window w);
-void subscribe_xkb();
-void subscribe_focus();
+void recordLayout(Window w, unsigned int layout);
+unsigned int fetchLayout(Window w);
+void init_xkb();
+void init_xfocusev();
+void init_hashtable();
+/* void getWindowClass(Window w, char* class_ret); */
 
 Display* d;
 Window root;
@@ -28,40 +31,32 @@ int xkbEventType;
 
 int main()
 {
-    /* char class[MAXSTR] = {0}; */
-    unsigned int layout, layout_prev, layout_main;
+    unsigned int layout, layout_prev;
 
     if (!(d = XOpenDisplay(NULL))) {
         fprintf(stderr, "Cannot Open Display.\n");
         return 1;
     }
 
-    subscribe_xkb();
-    subscribe_focus();
+    init_xkb();
+    init_xfocusev();
+    init_hashtable();
 
-    /* create the hashtable */
-    t = g_hash_table_new_full(g_int64_hash, g_int64_equal, free, NULL);
+    layout = layout_prev = getKeyboardLayout();
+    recordLayout(getActiveWindowUID(), layout);
 
-    layout = layout_prev = layout_main = getKeyboardLayout();
-    record(getActiveWindow(), layout_main);
-
-    /* Change Layout ===> XkbLockGroup(d, XkbUseCoreKbd, 1); */
-
-    for (;;) {
-
+    while(1) {
         XEvent ev;
         XNextEvent(d, &ev);
-
         if (is_xkb_event(ev)) {
             layout = getKeyboardLayout();
             if (layout == layout_prev)
                 continue;
             layout_prev = layout;
-            record(getActiveWindow(), getKeyboardLayout());
+            recordLayout(getActiveWindowUID(), getKeyboardLayout());
         }
-        else if (is_focus_event(ev)) {
-            XkbLockGroup(d, XkbUseCoreKbd, fetch(getActiveWindow()));
-        }
+        else if (is_focus_event(ev))
+            XkbLockGroup(d, XkbUseCoreKbd, fetchLayout(getActiveWindowUID()));
     }
 
     XFree(prop);
@@ -69,16 +64,10 @@ int main()
     return 0;
 }
 
-/* void record(Window w, const char* class, unsigned int layout) { */
-void record(Window w, unsigned int layout) {
-    unsigned long* key = NULL;
-    key = malloc(sizeof(*key));
-    *key = (unsigned long)w;
-    g_hash_table_insert(t, key, GINT_TO_POINTER((int)layout));
-}
-
-unsigned int fetch(Window w) {
-    return (unsigned int)GPOINTER_TO_INT(g_hash_table_lookup(t, &w));
+unsigned long getActiveWindowUID()
+{
+    unsigned long w = getActiveWindow();
+    return w + getWindowPID(w);
 }
 
 unsigned long getActiveWindow()
@@ -90,16 +79,12 @@ unsigned long getActiveWindow()
         return 0;
 }
 
-/* void getWindowClass(Window w, char* class_ret) */
-/* { */
-/*     if (!w) { */
-/*         class_ret[0] = '\0'; */
-/*         return; */
-/*     } */
-/*     XClassHint ch; */
-/*     XGetClassHint(d, w, &ch); */
-/*     strcpy(class_ret, ch.res_class); */
-/* } */
+unsigned long getWindowPID(Window w)
+{
+    if (!w)
+        return 0;
+    return getLongProperty(w, ("_NET_WM_PID"));
+}
 
 unsigned int getKeyboardLayout()
 {
@@ -140,8 +125,8 @@ void checkStatus(int status, Window w)
     }
 }
 
-// Subscribe to keyboard layout events
-void subscribe_xkb()
+/* subscribe to keyboard layout events */
+void init_xkb()
 {
     XKeysymToKeycode(d, XK_F1);
     XkbQueryExtension(d, 0, &xkbEventType, 0, 0, 0);
@@ -149,18 +134,50 @@ void subscribe_xkb()
     XSync(d, False);
 }
 
-// Subscribe to window events
-void subscribe_focus()
+/* subscribe to window events */
+void init_xfocusev()
 {
     root = DefaultRootWindow(d);
     XSelectInput(d, root, PropertyChangeMask);
 }
 
-int is_xkb_event(XEvent ev) {
+int is_xkb_event(XEvent ev)
+{
     XkbEvent* xev = (XkbEvent*)&ev;
     return (ev.type == xkbEventType && xev->any.xkb_type == XkbStateNotify);
 }
 
-int is_focus_event(XEvent ev) {
+int is_focus_event(XEvent ev)
+{
     return (ev.type == PropertyNotify && !strcmp(XGetAtomName(d, ev.xproperty.atom), "_NET_ACTIVE_WINDOW"));
 }
+
+/* create the hashtable */
+void init_hashtable()
+{
+    t = g_hash_table_new_full(g_int64_hash, g_int64_equal, free, NULL);
+}
+
+void recordLayout(Window w, unsigned int layout)
+{
+    unsigned long* key = NULL;
+    key = malloc(sizeof(*key));
+    *key = (unsigned long)w;
+    g_hash_table_insert(t, key, GINT_TO_POINTER((int)layout));
+}
+
+unsigned int fetchLayout(Window w)
+{
+    return (unsigned int)GPOINTER_TO_INT(g_hash_table_lookup(t, &w));
+}
+
+/* void getWindowClass(Window w, char* class_ret) */
+/* { */
+/*     if (!w) { */
+/*         class_ret[0] = '\0'; */
+/*         return; */
+/*     } */
+/*     XClassHint ch; */
+/*     XGetClassHint(d, w, &ch); */
+/*     strcpy(class_ret, ch.res_class); */
+/* } */
