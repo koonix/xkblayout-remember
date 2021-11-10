@@ -74,7 +74,7 @@ unsigned long getActiveWindowUID()
 unsigned long getActiveWindow()
 {
     unsigned long w;
-    if (( w = getLongProperty(root, "_NET_ACTIVE_WINDOW") ))
+    if (w = getLongProperty(root, "_NET_ACTIVE_WINDOW"))
         return w;
     else
         return 0;
@@ -84,7 +84,7 @@ unsigned long getWindowPID(Window w)
 {
     if (!w)
         return 0;
-    return getLongProperty(w, ("_NET_WM_PID"));
+    return getLongProperty(w, "_NET_WM_PID");
 }
 
 unsigned int getKeyboardLayout()

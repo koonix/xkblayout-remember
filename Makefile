@@ -20,4 +20,5 @@ clean :
 	rm -f $(BIN)
 
 $(BIN) : $(SRC)
-	$(CC) -Wall -Wextra -O2 $(SRC) -o $(BIN) -lX11 $(shell pkg-config --cflags --libs glib-2.0)
+	$(CC) $(SRC) -o $(BIN) -Wall -Wextra -Wno-parentheses \
+		-O2 -lX11 $(shell pkg-config --cflags --libs glib-2.0)
